@@ -7,12 +7,14 @@ from fastapi.responses import JSONResponse
 
 from adpo_agent.agent import orchestrator
 from adpo_agent.audit import AuditLogger
+from adpo_agent.explainer import ReflexExplainer
 
 
 class ADPOApplication:
     def __init__(self):
         self.app = FastAPI(title="ADPO Agent API")
         self.audit_logger = AuditLogger()
+        self.explainer = ReflexExplainer()
         self._register_routes()
 
     def _register_routes(self):
@@ -74,6 +76,9 @@ class ADPOApplication:
                     patient_age=int(lab_event["age"]),
                 )
 
+                # Vertex AI explanation
+                explanation = self.explainer.explain(decision)
+
                 if not decision.get("reflex_needed"):
                     audit_id = self.audit_logger.write_decision_event(
                         patient_id=lab_event["patient_id"],
@@ -88,6 +93,7 @@ class ADPOApplication:
                             "status": "processed",
                             "response": f"No reflex required. Reason: {decision.get('reason')}",
                             "decision": decision,
+                            "explanation": explanation,
                             "audit_id": audit_id,
                         },
                         status_code=200,
@@ -107,6 +113,7 @@ class ADPOApplication:
                             "status": "processed",
                             "response": f"URGENT: HITL review required for {lab_event['patient_id']}",
                             "decision": decision,
+                            "explanation": explanation,
                             "audit_id": audit_id,
                         },
                         status_code=200,
@@ -136,6 +143,7 @@ class ADPOApplication:
                         "status": "processed",
                         "response": f"Reflex order created successfully. ServiceRequest ID: {order_id}",
                         "decision": decision,
+                        "explanation": explanation,
                         "order_result": order_result,
                         "audit_id": audit_id,
                     },
