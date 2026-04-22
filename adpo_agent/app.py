@@ -1,5 +1,6 @@
 import base64
 import json
+import traceback
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -13,6 +14,14 @@ class ADPOApplication:
         self._register_routes()
 
     def _register_routes(self):
+
+        @self.app.get("/")
+        async def home():
+            return {
+                "message": "ADPO Agent API is running",
+                "health": "/health",
+                "process_lab_result": "POST /process-lab-result"
+            }
 
         @self.app.get("/health")
         async def health():
@@ -107,8 +116,6 @@ class ADPOApplication:
                 )
 
             except Exception as e:
-                
-                import traceback
                 print("[ERROR]", str(e))
                 traceback.print_exc()
                 return JSONResponse({"error": str(e)}, status_code=500)
