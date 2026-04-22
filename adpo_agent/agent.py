@@ -9,11 +9,6 @@ from adpo_agent.lab_rules import ReflexRuleEngine
 
 
 class ADPOOrchestrator:
-    """
-    Main business orchestrator for evaluating lab results
-    and creating reflex orders when needed.
-    """
-
     def __init__(self) -> None:
         self.rule_engine = ReflexRuleEngine()
         self.fhir_client = FHIRClient()
@@ -53,13 +48,6 @@ class ADPOOrchestrator:
             order_name=order_name,
             source_obs_id=source_observation_id,
             priority=priority,
-        )
-
-        self.audit_logger.write_event(
-            patient_id=patient_id,
-            event_type="REFLEX_ORDER_CREATED",
-            decision="AUTO_APPROVED",
-            details=order_code,
         )
         return result
 
@@ -104,26 +92,6 @@ def create_reflex_order(
 root_agent = Agent(
     name="ADPO_Orchestrator",
     model="gemini-1.5-pro-002",
-    instruction="""
-You are a Diagnostic Path Orchestrator for a clinical laboratory.
-
-Your job is to evaluate lab results and trigger appropriate follow-up tests.
-
-EXACT STEPS TO FOLLOW:
-1. Call check_lab_reflex_rules with the provided patient data.
-2. If reflex_needed = false: respond 'No reflex required. Reason: [reason]'
-3. If reflex_needed = true AND priority = STAT:
-   - Respond 'URGENT: HITL review required for [patient_id]'
-   - Do NOT create an order automatically
-4. If reflex_needed = true AND priority = ROUTINE:
-   - Call create_reflex_order with the reflex_order_code and reflex_test_name
-   - Confirm the order was created with the FHIR resource ID
-
-SAFETY RULES:
-- Never infer or guess numeric values.
-- Never create an order without a valid LOINC code.
-- If any parameter is missing, respond 'MISSING DATA — HITL required'
-- Always include the source Observation ID in every order you create.
-""",
+    instruction="Clinical reflex orchestration agent",
     tools=[check_lab_reflex_rules, create_reflex_order],
 )

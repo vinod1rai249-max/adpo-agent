@@ -6,21 +6,22 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from adpo_agent.agent import orchestrator
+from adpo_agent.audit import AuditLogger
 
 
 class ADPOApplication:
     def __init__(self):
         self.app = FastAPI(title="ADPO Agent API")
+        self.audit_logger = AuditLogger()
         self._register_routes()
 
     def _register_routes(self):
-
         @self.app.get("/")
         async def home():
             return {
                 "message": "ADPO Agent API is running",
                 "health": "/health",
-                "process_lab_result": "POST /process-lab-result"
+                "process_lab_result": "POST /process-lab-result",
             }
 
         @self.app.get("/health")
@@ -73,24 +74,40 @@ class ADPOApplication:
                     patient_age=int(lab_event["age"]),
                 )
 
-                print(f"[ADPO] Decision: {decision}")
-
                 if not decision.get("reflex_needed"):
+                    audit_id = self.audit_logger.write_decision_event(
+                        patient_id=lab_event["patient_id"],
+                        loinc_code=lab_event["loinc_code"],
+                        observation_id=lab_event["observation_id"],
+                        decision=decision,
+                        action="NO_REFLEX",
+                    )
+
                     return JSONResponse(
                         {
                             "status": "processed",
                             "response": f"No reflex required. Reason: {decision.get('reason')}",
                             "decision": decision,
+                            "audit_id": audit_id,
                         },
                         status_code=200,
                     )
 
                 if decision.get("priority", "").upper() == "STAT":
+                    audit_id = self.audit_logger.write_decision_event(
+                        patient_id=lab_event["patient_id"],
+                        loinc_code=lab_event["loinc_code"],
+                        observation_id=lab_event["observation_id"],
+                        decision=decision,
+                        action="HITL_ESCALATION",
+                    )
+
                     return JSONResponse(
                         {
                             "status": "processed",
                             "response": f"URGENT: HITL review required for {lab_event['patient_id']}",
                             "decision": decision,
+                            "audit_id": audit_id,
                         },
                         status_code=200,
                     )
@@ -105,12 +122,22 @@ class ADPOApplication:
 
                 order_id = order_result.get("id", "unknown")
 
+                audit_id = self.audit_logger.write_decision_event(
+                    patient_id=lab_event["patient_id"],
+                    loinc_code=lab_event["loinc_code"],
+                    observation_id=lab_event["observation_id"],
+                    decision=decision,
+                    action="AUTO_ORDER_CREATED",
+                    order_id=order_id,
+                )
+
                 return JSONResponse(
                     {
                         "status": "processed",
                         "response": f"Reflex order created successfully. ServiceRequest ID: {order_id}",
                         "decision": decision,
                         "order_result": order_result,
+                        "audit_id": audit_id,
                     },
                     status_code=200,
                 )
