@@ -1,0 +1,170 @@
+[
+  {
+    "resourceType": "Patient",
+    "id": "test-patient-psa-normal",
+    "name": [
+      {
+        "use": "official",
+        "given": [
+          "James"
+        ],
+        "family": "Wilson"
+      }
+    ],
+    "gender": "male",
+    "birthDate": "1960-06-15",
+    "identifier": [
+      {
+        "system": "urn:adpo:test-patients",
+        "value": "test-patient-psa-normal"
+      }
+    ]
+  },
+  {
+    "resourceType": "Patient",
+    "id": "test-patient-psa-high",
+    "name": [
+      {
+        "use": "official",
+        "given": [
+          "Robert"
+        ],
+        "family": "Johnson"
+      }
+    ],
+    "gender": "male",
+    "birthDate": "1958-06-15",
+    "identifier": [
+      {
+        "system": "urn:adpo:test-patients",
+        "value": "test-patient-psa-high"
+      }
+    ]
+  },
+  {
+    "resourceType": "Patient",
+    "id": "test-patient-hba1c-normal",
+    "name": [
+      {
+        "use": "official",
+        "given": [
+          "Maria"
+        ],
+        "family": "Garcia"
+      }
+    ],
+    "gender": "female",
+    "birthDate": "1975-06-15",
+    "identifier": [
+      {
+        "system": "urn:adpo:test-patients",
+        "value": "test-patient-hba1c-normal"
+      }
+    ]
+  },
+  {
+    "resourceType": "Patient",
+    "id": "test-patient-hba1c-high",
+    "name": [
+      {
+        "use": "official",
+        "given": [
+          "Linda"
+        ],
+        "family": "Smith"
+      }
+    ],
+    "gender": "female",
+    "birthDate": "1969-06-15",
+    "identifier": [
+      {
+        "system": "urn:adpo:test-patients",
+        "value": "test-patient-hba1c-high"
+      }
+    ]
+  },
+  {
+    "resourceType": "Patient",
+    "id": "test-patient-inr-normal",
+    "name": [
+      {
+        "use": "official",
+        "given": [
+          "David"
+        ],
+        "family": "Brown"
+      }
+    ],
+    "gender": "male",
+    "birthDate": "1952-06-15",
+    "identifier": [
+      {
+        "system": "urn:adpo:test-patients",
+        "value": "test-patient-inr-normal"
+      }
+    ]
+  },
+  {
+    "resourceType": "Patient",
+    "id": "test-patient-inr-critical",
+    "name": [
+      {
+        "use": "official",
+        "given": [
+          "Barbara"
+        ],
+        "family": "Taylor"
+      }
+    ],
+    "gender": "female",
+    "birthDate": "1948-06-15",
+    "identifier": [
+      {
+        "system": "urn:adpo:test-patients",
+        "value": "test-patient-inr-critical"
+      }
+    ]
+  },
+  {
+    "resourceType": "Patient",
+    "id": "test-patient-egfr-normal",
+    "name": [
+      {
+        "use": "official",
+        "given": [
+          "Susan"
+        ],
+        "family": "Anderson"
+      }
+    ],
+    "gender": "female",
+    "birthDate": "1965-06-15",
+    "identifier": [
+      {
+        "system": "urn:adpo:test-patients",
+        "value": "test-patient-egfr-normal"
+      }
+    ]
+  },
+  {
+    "resourceType": "Patient",
+    "id": "test-patient-egfr-low",
+    "name": [
+      {
+        "use": "official",
+        "given": [
+          "Michael"
+        ],
+        "family": "Martinez"
+      }
+    ],
+    "gender": "male",
+    "birthDate": "1950-06-15",
+    "identifier": [
+      {
+        "system": "urn:adpo:test-patients",
+        "value": "test-patient-egfr-low"
+      }
+    ]
+  }
+]

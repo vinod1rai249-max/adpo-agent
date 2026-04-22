@@ -1,0 +1,330 @@
+[
+  {
+    "resourceType": "Observation",
+    "id": "obs-psa-normal",
+    "status": "final",
+    "category": [
+      {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+            "code": "laboratory",
+            "display": "Laboratory"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "2857-1",
+          "display": "PSA Total"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/test-patient-psa-normal"
+    },
+    "effectiveDateTime": "2026-04-22T03:50:24.273097+00:00",
+    "valueQuantity": {
+      "value": 2.1,
+      "unit": "ng/mL",
+      "system": "http://unitsofmeasure.org",
+      "code": "ng/mL"
+    },
+    "identifier": [
+      {
+        "system": "urn:adpo:observations",
+        "value": "obs-psa-normal"
+      }
+    ]
+  },
+  {
+    "resourceType": "Observation",
+    "id": "obs-psa-high",
+    "status": "final",
+    "category": [
+      {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+            "code": "laboratory",
+            "display": "Laboratory"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "2857-1",
+          "display": "PSA Total"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/test-patient-psa-high"
+    },
+    "effectiveDateTime": "2026-04-22T03:50:24.273097+00:00",
+    "valueQuantity": {
+      "value": 6.8,
+      "unit": "ng/mL",
+      "system": "http://unitsofmeasure.org",
+      "code": "ng/mL"
+    },
+    "identifier": [
+      {
+        "system": "urn:adpo:observations",
+        "value": "obs-psa-high"
+      }
+    ]
+  },
+  {
+    "resourceType": "Observation",
+    "id": "obs-hba1c-normal",
+    "status": "final",
+    "category": [
+      {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+            "code": "laboratory",
+            "display": "Laboratory"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "4548-4",
+          "display": "HbA1c"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/test-patient-hba1c-normal"
+    },
+    "effectiveDateTime": "2026-04-22T03:50:24.274247+00:00",
+    "valueQuantity": {
+      "value": 7.2,
+      "unit": "%",
+      "system": "http://unitsofmeasure.org",
+      "code": "%"
+    },
+    "identifier": [
+      {
+        "system": "urn:adpo:observations",
+        "value": "obs-hba1c-normal"
+      }
+    ]
+  },
+  {
+    "resourceType": "Observation",
+    "id": "obs-hba1c-high",
+    "status": "final",
+    "category": [
+      {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+            "code": "laboratory",
+            "display": "Laboratory"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "4548-4",
+          "display": "HbA1c"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/test-patient-hba1c-high"
+    },
+    "effectiveDateTime": "2026-04-22T03:50:24.274247+00:00",
+    "valueQuantity": {
+      "value": 11.3,
+      "unit": "%",
+      "system": "http://unitsofmeasure.org",
+      "code": "%"
+    },
+    "identifier": [
+      {
+        "system": "urn:adpo:observations",
+        "value": "obs-hba1c-high"
+      }
+    ]
+  },
+  {
+    "resourceType": "Observation",
+    "id": "obs-inr-normal",
+    "status": "final",
+    "category": [
+      {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+            "code": "laboratory",
+            "display": "Laboratory"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "34714-6",
+          "display": "INR"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/test-patient-inr-normal"
+    },
+    "effectiveDateTime": "2026-04-22T03:50:24.274247+00:00",
+    "valueQuantity": {
+      "value": 2.1,
+      "unit": "INR",
+      "system": "http://unitsofmeasure.org",
+      "code": "{INR}"
+    },
+    "identifier": [
+      {
+        "system": "urn:adpo:observations",
+        "value": "obs-inr-normal"
+      }
+    ]
+  },
+  {
+    "resourceType": "Observation",
+    "id": "obs-inr-critical",
+    "status": "final",
+    "category": [
+      {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+            "code": "laboratory",
+            "display": "Laboratory"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "34714-6",
+          "display": "INR"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/test-patient-inr-critical"
+    },
+    "effectiveDateTime": "2026-04-22T03:50:24.274247+00:00",
+    "valueQuantity": {
+      "value": 5.9,
+      "unit": "INR",
+      "system": "http://unitsofmeasure.org",
+      "code": "{INR}"
+    },
+    "identifier": [
+      {
+        "system": "urn:adpo:observations",
+        "value": "obs-inr-critical"
+      }
+    ]
+  },
+  {
+    "resourceType": "Observation",
+    "id": "obs-egfr-normal",
+    "status": "final",
+    "category": [
+      {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+            "code": "laboratory",
+            "display": "Laboratory"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "62238-1",
+          "display": "eGFR"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/test-patient-egfr-normal"
+    },
+    "effectiveDateTime": "2026-04-22T03:50:24.274247+00:00",
+    "valueQuantity": {
+      "value": 72.0,
+      "unit": "mL/min/1.73m2",
+      "system": "http://unitsofmeasure.org",
+      "code": "mL/min/{1.73_m2}"
+    },
+    "identifier": [
+      {
+        "system": "urn:adpo:observations",
+        "value": "obs-egfr-normal"
+      }
+    ]
+  },
+  {
+    "resourceType": "Observation",
+    "id": "obs-egfr-low",
+    "status": "final",
+    "category": [
+      {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+            "code": "laboratory",
+            "display": "Laboratory"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "62238-1",
+          "display": "eGFR"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/test-patient-egfr-low"
+    },
+    "effectiveDateTime": "2026-04-22T03:50:24.274247+00:00",
+    "valueQuantity": {
+      "value": 18.0,
+      "unit": "mL/min/1.73m2",
+      "system": "http://unitsofmeasure.org",
+      "code": "mL/min/{1.73_m2}"
+    },
+    "identifier": [
+      {
+        "system": "urn:adpo:observations",
+        "value": "obs-egfr-low"
+      }
+    ]
+  }
+]
