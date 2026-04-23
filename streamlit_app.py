@@ -65,7 +65,7 @@ def priority_label(priority: str) -> str:
         return "🔴 Escalated (Human Review Required)"
     if not priority:
         return "N/A"
-    return priority
+    return str(priority)
 
 
 def workflow_outcome(action: str) -> str:
@@ -108,25 +108,36 @@ def flatten_logs(logs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         if isinstance(decision, dict):
             decision_summary = decision.get("reason", "")
             priority = decision.get("priority", "")
-            reflex_needed = decision.get("reflex_needed", "")
+            reflex_needed_raw = decision.get("reflex_needed", "")
         else:
             decision_summary = str(decision)
             priority = ""
-            reflex_needed = ""
+            reflex_needed_raw = ""
 
         action = row.get("action", row.get("event_type", "UNKNOWN"))
 
+        if reflex_needed_raw is True:
+            reflex_needed = "True"
+        elif reflex_needed_raw is False:
+            reflex_needed = "False"
+        else:
+            reflex_needed = str(reflex_needed_raw) if reflex_needed_raw is not None else ""
+
+        order_id_value = row.get("order_id", row.get("details", ""))
+        if order_id_value is None:
+            order_id_value = ""
+
         rows.append({
-            "document_id": row.get("document_id"),
-            "timestamp": row.get("timestamp"),
-            "patient_id": row.get("patient_id"),
-            "loinc_code": row.get("loinc_code"),
-            "action": action,
-            "workflow_outcome": workflow_outcome(action),
-            "priority": priority_label(priority),
+            "document_id": str(row.get("document_id", "")),
+            "timestamp": str(row.get("timestamp", "")),
+            "patient_id": str(row.get("patient_id", "")),
+            "loinc_code": str(row.get("loinc_code", "")),
+            "action": str(action),
+            "workflow_outcome": str(workflow_outcome(action)),
+            "priority": str(priority_label(priority)),
             "reflex_needed": reflex_needed,
-            "order_id": row.get("order_id", row.get("details")),
-            "decision_summary": decision_summary,
+            "order_id": str(order_id_value),
+            "decision_summary": str(decision_summary),
         })
 
     return rows
@@ -137,11 +148,11 @@ def show_service_request(order: Dict[str, Any]):
 
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.metric("ServiceRequest ID", order.get("id", "N/A"))
+        st.metric("ServiceRequest ID", str(order.get("id", "N/A")))
     with c2:
-        st.metric("Status", order.get("status", "N/A"))
+        st.metric("Status", str(order.get("status", "N/A")))
     with c3:
-        st.metric("Priority", priority_label(order.get("priority", "N/A")))
+        st.metric("Priority", priority_label(str(order.get("priority", "N/A"))))
 
     st.markdown("#### Ordered Test")
     code_block = order.get("code", {})
@@ -391,7 +402,8 @@ with tab1:
         st.warning("No audit records found for the selected filters.")
     else:
         display_df = pd.DataFrame(table_rows)
-        st.dataframe(display_df, use_container_width=True)
+        display_df = display_df.fillna("").astype(str)
+        st.dataframe(display_df, width="stretch")
 
         st.subheader("Record Detail View")
 
@@ -410,7 +422,8 @@ with tab1:
                 raw_priority = decision.get("priority", "N/A")
                 priority = priority_label(raw_priority)
                 reason = decision.get("reason", "N/A")
-                reflex_needed = str(decision.get("reflex_needed", "N/A"))
+                reflex_needed_raw = decision.get("reflex_needed", "N/A")
+                reflex_needed = "True" if reflex_needed_raw is True else "False" if reflex_needed_raw is False else str(reflex_needed_raw)
             else:
                 priority = "N/A"
                 reason = str(decision)
