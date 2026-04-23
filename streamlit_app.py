@@ -9,16 +9,10 @@ import streamlit as st
 from google.cloud import firestore
 
 
-# ---------------------------------
-# Config
-# ---------------------------------
 DEFAULT_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("PROJECT_ID") or "adpo-healthcare-agent"
 DEFAULT_API_BASE_URL = os.getenv("API_BASE_URL") or "http://127.0.0.1:8000"
 
 
-# ---------------------------------
-# Firestore helper
-# ---------------------------------
 class AuditLogViewer:
     def __init__(self, project_id: str, collection_name: str = "audit_events"):
         self.project_id = project_id
@@ -44,11 +38,8 @@ class AuditLogViewer:
         return records[:limit]
 
 
-# ---------------------------------
-# UI helpers
-# ---------------------------------
 def action_color(action: str) -> str:
-    if action == "AUTO_ORDER_CREATED" or action == "REFLEX_ORDER_CREATED":
+    if action in ["AUTO_ORDER_CREATED", "REFLEX_ORDER_CREATED"]:
         return "#d1fae5"
     if action == "HITL_ESCALATION":
         return "#fee2e2"
@@ -58,7 +49,7 @@ def action_color(action: str) -> str:
 
 
 def action_emoji(action: str) -> str:
-    if action == "AUTO_ORDER_CREATED" or action == "REFLEX_ORDER_CREATED":
+    if action in ["AUTO_ORDER_CREATED", "REFLEX_ORDER_CREATED"]:
         return "🟢"
     if action == "HITL_ESCALATION":
         return "🔴"
@@ -67,7 +58,8 @@ def action_emoji(action: str) -> str:
     return "⚪"
 
 
-def render_status_card(title: str, value: str, bg_color: str):
+def render_status_card(title: str, value: str, bg_color: str, help_text: str = ""):
+    help_html = f"<div style='font-size:12px;color:#4b5563;margin-top:6px;'>{help_text}</div>" if help_text else ""
     st.markdown(
         f"""
         <div style="
@@ -77,9 +69,11 @@ def render_status_card(title: str, value: str, bg_color: str):
             border:1px solid #e5e7eb;
             box-shadow:0 1px 6px rgba(0,0,0,0.06);
             margin-bottom:8px;
+            min-height:110px;
         ">
             <div style="font-size:14px;color:#374151;">{title}</div>
             <div style="font-size:22px;font-weight:700;color:#111827;">{value}</div>
+            {help_html}
         </div>
         """,
         unsafe_allow_html=True,
@@ -117,9 +111,149 @@ def flatten_logs(logs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return rows
 
 
-# ---------------------------------
-# Page setup
-# ---------------------------------
+def show_service_request(order: Dict[str, Any]):
+    st.markdown("### ServiceRequest Created")
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.metric("ServiceRequest ID", order.get("id", "N/A"))
+    with c2:
+        st.metric("Status", order.get("status", "N/A"))
+    with c3:
+        st.metric("Priority", order.get("priority", "N/A"))
+
+    st.markdown("#### Ordered Test")
+    code_block = order.get("code", {})
+    if code_block:
+        text_value = code_block.get("text", "N/A")
+        st.write(f"**Test Name:** {text_value}")
+        st.json(code_block)
+    else:
+        st.info("No code information found.")
+
+    st.markdown("#### Patient Reference")
+    st.write(order.get("subject", {}).get("reference", "N/A"))
+
+    st.markdown("#### Triggering Observation")
+    reason_refs = order.get("reasonReference", [])
+    if reason_refs:
+        st.write(reason_refs[0].get("reference", "N/A"))
+    else:
+        st.info("No triggering observation found.")
+
+    st.markdown("#### Why ServiceRequest matters")
+    st.write(
+        "A ServiceRequest is the actual follow-up clinical order created by the system. "
+        "It means the case was suitable for safe automation under predefined rules."
+    )
+
+    st.markdown("#### Full ServiceRequest JSON")
+    st.json(order)
+
+
+def show_decision_guide():
+    st.markdown("## Help, Glossary, and Workflow Guide")
+
+    c1, c2, c3 = st.columns(3)
+
+    with c1:
+        render_status_card(
+            "🟢 AUTO_ORDER_CREATED",
+            "Routine abnormal case",
+            "#d1fae5",
+            "The result crossed a threshold and the system created a follow-up order automatically."
+        )
+
+    with c2:
+        render_status_card(
+            "🔵 NO_REFLEX",
+            "Normal / no action",
+            "#dbeafe",
+            "The result did not cross the threshold, so no follow-up test was needed."
+        )
+
+    with c3:
+        render_status_card(
+            "🔴 HITL_ESCALATION",
+            "Critical / human review",
+            "#fee2e2",
+            "HITL means Human In The Loop. The case is escalated for clinician review."
+        )
+
+    with st.expander("What do these actions mean?"):
+        st.markdown(
+            """
+**AUTO_ORDER_CREATED**  
+The result is abnormal and matches a rule for reflex testing.  
+The system creates a follow-up lab order automatically.
+
+**NO_REFLEX**  
+The result is normal or below the reflex threshold.  
+The system records the event, but no further order is needed.
+
+**HITL_ESCALATION**  
+HITL means **Human In The Loop**.  
+The result is risky, critical, or clinically sensitive enough that the system should not automate the next step without human oversight.
+"""
+        )
+
+    with st.expander("What is a ServiceRequest and why do we use it?"):
+        st.markdown(
+            """
+**ServiceRequest** is a healthcare standard resource in FHIR that represents an order for a test, procedure, or service.
+
+### In this use case
+When the system detects a routine abnormal lab result, it creates a **ServiceRequest** to order the next appropriate follow-up test.
+
+### Why this is useful
+- turns a decision into a real clinical order
+- reduces manual follow-up work
+- keeps the workflow standardized
+- makes the action traceable and auditable
+"""
+        )
+
+    with st.expander("Important abbreviations used in this dashboard"):
+        st.markdown(
+            """
+**HITL** = Human In The Loop  
+A human expert reviews the case before action is taken.
+
+**LOINC** = Logical Observation Identifiers Names and Codes  
+A standard code system used to identify laboratory tests.
+
+**FHIR** = Fast Healthcare Interoperability Resources  
+A healthcare data standard used for medical resources like Patient, Observation, and ServiceRequest.
+
+**ServiceRequest**  
+A medical order for a follow-up test or procedure.
+
+**Reflex Testing**  
+Automatic follow-up testing triggered when a result crosses a predefined clinical rule.
+"""
+        )
+
+    with st.expander("How to read this dashboard"):
+        st.markdown(
+            """
+### Summary cards
+At the top, you see how many total events occurred and how many belong to each outcome type.
+
+### Audit Explorer
+This shows the audit trail stored in Firestore.
+Each row represents one processed lab event.
+
+### Filters
+You can filter by:
+- **Patient ID** → see only one patient’s records
+- **Action Type** → see only auto-orders, only no-reflex cases, or only HITL escalations
+
+### Live API Tester
+This lets you trigger sample clinical cases and see how the system responds.
+"""
+        )
+
+
 st.set_page_config(page_title="ADPO Premium Dashboard", layout="wide")
 
 st.markdown(
@@ -137,32 +271,50 @@ st.markdown(
 )
 
 st.title("ADPO Clinical Reflex Dashboard")
-st.caption("Audit visibility, decision intelligence, and live testing")
+st.caption("Audit visibility, ServiceRequest tracking, explanation layer, and self-explanatory workflow guidance")
 
 viewer = AuditLogViewer(project_id=DEFAULT_PROJECT_ID)
 
-# ---------------------------------
-# Sidebar
-# ---------------------------------
+action_display_to_value = {
+    "🟢 Auto Order Created": "AUTO_ORDER_CREATED",
+    "🔵 No Reflex": "NO_REFLEX",
+    "🔴 Human Review (HITL)": "HITL_ESCALATION",
+}
+
 with st.sidebar:
     st.header("Dashboard Controls")
 
     api_base_url = st.text_input("API Base URL", value=DEFAULT_API_BASE_URL)
     patient_filter = st.text_input("Filter by Patient ID", value="")
+
+    action_filter_labels = st.multiselect(
+        "Filter by Action Type",
+        options=list(action_display_to_value.keys()),
+        default=[],
+        help="Use this to show only one type of workflow outcome, such as only critical HITL cases or only auto-created follow-up orders."
+    )
+
     limit = st.slider("Max records", min_value=5, max_value=200, value=50, step=5)
+
+    st.info("Use the Help & Glossary tab if you are new to the workflow or abbreviations.")
 
     if st.button("Refresh dashboard"):
         st.rerun()
 
-# ---------------------------------
-# Load data
-# ---------------------------------
+selected_action_values = [action_display_to_value[label] for label in action_filter_labels]
+
 logs = viewer.fetch_logs(patient_id=patient_filter, limit=limit)
+
+if selected_action_values:
+    filtered_logs = []
+    for r in logs:
+        action_value = r.get("action", r.get("event_type", "UNKNOWN"))
+        if action_value in selected_action_values:
+            filtered_logs.append(r)
+    logs = filtered_logs
+
 table_rows = flatten_logs(logs)
 
-# ---------------------------------
-# Top summary
-# ---------------------------------
 st.subheader("Summary")
 
 total_events = len(table_rows)
@@ -172,24 +324,21 @@ no_reflex_count = sum(1 for r in table_rows if r["action"] == "NO_REFLEX")
 
 c1, c2, c3, c4 = st.columns(4)
 with c1:
-    render_status_card("Total Events", str(total_events), "#f3f4f6")
+    render_status_card("Total Events", str(total_events), "#f3f4f6", "Total number of audit records currently visible.")
 with c2:
-    render_status_card("Auto Orders", str(auto_orders), "#d1fae5")
+    render_status_card("Auto Orders", str(auto_orders), "#d1fae5", "Routine abnormal cases where a ServiceRequest was created.")
 with c3:
-    render_status_card("HITL Escalations", str(hitl_count), "#fee2e2")
+    render_status_card("HITL Escalations", str(hitl_count), "#fee2e2", "Critical or risky cases escalated for clinician review.")
 with c4:
-    render_status_card("No Reflex", str(no_reflex_count), "#dbeafe")
+    render_status_card("No Reflex", str(no_reflex_count), "#dbeafe", "Cases where no follow-up order was required.")
 
-tab1, tab2 = st.tabs(["Audit Explorer", "Live API Tester"])
+tab1, tab2, tab3 = st.tabs(["Audit Explorer", "Live API Tester", "Help & Glossary"])
 
-# ---------------------------------
-# TAB 1 - Audit Explorer
-# ---------------------------------
 with tab1:
     st.subheader("Audit Event Table")
 
     if not table_rows:
-        st.warning("No audit records found.")
+        st.warning("No audit records found for the selected filters.")
     else:
         display_df = pd.DataFrame(table_rows)
         st.dataframe(display_df, use_container_width=True)
@@ -233,12 +382,14 @@ with tab1:
                 st.markdown("### AI Explanation")
                 st.success(selected["explanation"])
 
+            if selected.get("order_id"):
+                st.markdown("### ServiceRequest Summary")
+                st.write(f"**Order ID:** {selected.get('order_id')}")
+                st.caption("This means a follow-up clinical order was created for a routine abnormal case.")
+
             st.markdown("### Full Audit JSON")
             st.json(selected)
 
-# ---------------------------------
-# TAB 2 - Live API Tester
-# ---------------------------------
 with tab2:
     st.subheader("Trigger Clinical Scenarios")
 
@@ -350,12 +501,14 @@ with tab2:
                     st.json(decision)
 
                 if "order_result" in response_json:
-                    st.markdown("### Order Result")
-                    st.json(response_json["order_result"])
+                    show_service_request(response_json["order_result"])
 
                 if "audit_id" in response_json:
                     st.markdown("### Audit ID")
                     st.code(response_json["audit_id"])
+
+                st.markdown("### Full API Response")
+                st.json(response_json)
 
             else:
                 st.error("API returned an error")
@@ -363,3 +516,6 @@ with tab2:
 
         except Exception as e:
             st.error(f"Request failed: {str(e)}")
+
+with tab3:
+    show_decision_guide()
