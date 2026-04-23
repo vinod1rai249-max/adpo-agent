@@ -12,6 +12,4 @@ ENV PORT=8080
 ENV PROJECT_ID=adpo-healthcare-agent
 ENV GOOGLE_CLOUD_PROJECT=adpo-healthcare-agent
 
-ENV API_BASE_URL=https://adpo-agent-1051385917818.us-central1.run.app
-
-CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8080", "--server.address=0.0.0.0", "--server.headless=true"]
+CMD ["uvicorn", "adpo_agent.app:app", "--host", "0.0.0.0", "--port", "8080"]
