@@ -58,6 +58,26 @@ def action_emoji(action: str) -> str:
     return "⚪"
 
 
+def priority_label(priority: str) -> str:
+    if priority == "ROUTINE":
+        return "🟢 Routine (Auto Processed)"
+    if priority == "STAT":
+        return "🔴 Escalated (Human Review Required)"
+    if not priority:
+        return "N/A"
+    return priority
+
+
+def workflow_outcome(action: str) -> str:
+    if action in ["AUTO_ORDER_CREATED", "REFLEX_ORDER_CREATED"]:
+        return "Routine Reflex (Automated)"
+    if action == "HITL_ESCALATION":
+        return "Critical Reflex (Human Review)"
+    if action == "NO_REFLEX":
+        return "No Reflex Needed"
+    return "Unknown"
+
+
 def render_status_card(title: str, value: str, bg_color: str, help_text: str = ""):
     help_html = f"<div style='font-size:12px;color:#4b5563;margin-top:6px;'>{help_text}</div>" if help_text else ""
     st.markdown(
@@ -102,7 +122,8 @@ def flatten_logs(logs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             "patient_id": row.get("patient_id"),
             "loinc_code": row.get("loinc_code"),
             "action": action,
-            "priority": priority,
+            "workflow_outcome": workflow_outcome(action),
+            "priority": priority_label(priority),
             "reflex_needed": reflex_needed,
             "order_id": row.get("order_id", row.get("details")),
             "decision_summary": decision_summary,
@@ -120,7 +141,7 @@ def show_service_request(order: Dict[str, Any]):
     with c2:
         st.metric("Status", order.get("status", "N/A"))
     with c3:
-        st.metric("Priority", order.get("priority", "N/A"))
+        st.metric("Priority", priority_label(order.get("priority", "N/A")))
 
     st.markdown("#### Ordered Test")
     code_block = order.get("code", {})
@@ -233,6 +254,29 @@ Automatic follow-up testing triggered when a result crosses a predefined clinica
 """
         )
 
+    with st.expander("How to understand Routine vs Escalated cases"):
+        st.markdown(
+            """
+### Both can be reflex-triggered
+A result can cross a threshold in both routine and critical cases.
+
+### Routine case
+- reflex is needed
+- automation is considered safe
+- the system creates a ServiceRequest automatically
+
+### Escalated case
+- reflex is needed
+- but the case is more urgent or risky
+- the system does **not** automate the next step
+- it escalates to human review
+
+### Simple interpretation
+- **Routine (Auto Processed)** = safe to automate
+- **Escalated (Human Review Required)** = too risky to automate
+"""
+        )
+
     with st.expander("How to read this dashboard"):
         st.markdown(
             """
@@ -246,7 +290,13 @@ Each row represents one processed lab event.
 ### Filters
 You can filter by:
 - **Patient ID** → see only one patient’s records
-- **Action Type** → see only auto-orders, only no-reflex cases, or only HITL escalations
+- **Action Type** → see only auto-orders, only no-reflex cases, or only escalated cases
+
+### Workflow Outcome
+This tells you the real meaning of the action:
+- **Routine Reflex (Automated)**
+- **Critical Reflex (Human Review)**
+- **No Reflex Needed**
 
 ### Live API Tester
 This lets you trigger sample clinical cases and see how the system responds.
@@ -291,7 +341,7 @@ with st.sidebar:
         "Filter by Action Type",
         options=list(action_display_to_value.keys()),
         default=[],
-        help="Use this to show only one type of workflow outcome, such as only critical HITL cases or only auto-created follow-up orders."
+        help="Use this to show only one type of workflow outcome, such as only escalated critical cases or only auto-created follow-up orders."
     )
 
     limit = st.slider("Max records", min_value=5, max_value=200, value=50, step=5)
@@ -328,7 +378,7 @@ with c1:
 with c2:
     render_status_card("Auto Orders", str(auto_orders), "#d1fae5", "Routine abnormal cases where a ServiceRequest was created.")
 with c3:
-    render_status_card("HITL Escalations", str(hitl_count), "#fee2e2", "Critical or risky cases escalated for clinician review.")
+    render_status_card("Escalated Cases", str(hitl_count), "#fee2e2", "Critical or risky cases escalated for clinician review.")
 with c4:
     render_status_card("No Reflex", str(no_reflex_count), "#dbeafe", "Cases where no follow-up order was required.")
 
@@ -357,7 +407,8 @@ with tab1:
             decision = selected.get("decision", {})
 
             if isinstance(decision, dict):
-                priority = decision.get("priority", "N/A")
+                raw_priority = decision.get("priority", "N/A")
+                priority = priority_label(raw_priority)
                 reason = decision.get("reason", "N/A")
                 reflex_needed = str(decision.get("reflex_needed", "N/A"))
             else:
@@ -365,15 +416,20 @@ with tab1:
                 reason = str(decision)
                 reflex_needed = "N/A"
 
+            outcome = workflow_outcome(action)
+
             d1, d2, d3, d4 = st.columns(4)
             with d1:
                 render_status_card("Action", f"{action_emoji(action)} {action}", action_color(action))
             with d2:
-                render_status_card("Priority", str(priority), "#fef3c7")
+                render_status_card("Workflow Outcome", outcome, "#f3f4f6")
             with d3:
-                render_status_card("Reflex Needed", str(reflex_needed), "#e0f2fe")
+                render_status_card("Priority Meaning", priority, "#fef3c7")
             with d4:
-                render_status_card("Patient ID", str(selected.get("patient_id", "N/A")), "#f3f4f6")
+                render_status_card("Reflex Needed", str(reflex_needed), "#e0f2fe")
+
+            st.markdown("### Patient ID")
+            st.code(str(selected.get("patient_id", "N/A")))
 
             st.markdown("### Decision Reason")
             st.info(reason)
@@ -491,14 +547,24 @@ with tab2:
                 action_text = response_json.get("response", "Processed")
                 st.success(action_text)
 
+                if "decision" in response_json:
+                    decision = response_json["decision"]
+                    raw_priority = decision.get("priority", "")
+                    st.markdown("### Workflow Interpretation")
+                    if raw_priority == "STAT":
+                        st.error("🔴 Escalated (Human Review Required)")
+                    elif raw_priority == "ROUTINE" and decision.get("reflex_needed"):
+                        st.success("🟢 Routine Reflex (Auto Processed)")
+                    elif not decision.get("reflex_needed"):
+                        st.info("🔵 No Reflex Needed")
+
                 if "explanation" in response_json and response_json["explanation"]:
                     st.markdown("### AI Explanation")
                     st.info(response_json["explanation"])
 
                 if "decision" in response_json:
-                    decision = response_json["decision"]
                     st.markdown("### Decision")
-                    st.json(decision)
+                    st.json(response_json["decision"])
 
                 if "order_result" in response_json:
                     show_service_request(response_json["order_result"])
