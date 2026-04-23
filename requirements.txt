@@ -16,3 +16,4 @@ streamlit
 pandas
 google-genai>=1.51.0
 requests
+

@@ -1,0 +1,22 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'Dockerfile.streamlit', '-t', 'gcr.io/$PROJECT_ID/adpo-dashboard', '.']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/adpo-dashboard']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      [
+        'run', 'deploy', 'adpo-dashboard',
+        '--image', 'gcr.io/$PROJECT_ID/adpo-dashboard',
+        '--region', 'us-central1',
+        '--platform', 'managed',
+        '--allow-unauthenticated',
+        '--service-account', 'adpo-agent-sa@$PROJECT_ID.iam.gserviceaccount.com',
+        '--set-env-vars', 'PROJECT_ID=$PROJECT_ID,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,API_BASE_URL=https://adpo-agent-1051385917818.us-central1.run.app'
+      ]
+
+images:
+  - 'gcr.io/$PROJECT_ID/adpo-dashboard'
