@@ -78,13 +78,14 @@ graph TD
 ## 💻 Code Flow (Beginner Friendly)
 1. **The Trigger:** A new lab result arrives as a message (via Google Cloud Pub/Sub).
 2. **The Intake:** Our `FastAPI` app (`app.py`) catches the message and extracts the patient's data (ID, test code, value, age, gender).
-3. **The Rule Check:** The system looks into a database (Firestore) to see if there is a "Reflex Rule" for that specific test (e.g., *"If Glucose > 200, order a follow-up"*).
-4. **The Decision:** 
-   - If the value is normal: The process stops and logs "No Action Needed."
-   - If the value is abnormal: The **ADPO Agent** decides which follow-up test to order.
-5. **The Action:** The system automatically creates a **ServiceRequest** (a medical order) in the clinical database (FHIR Store).
-6. **The Explanation:** **Gemini AI** writes a simple, professional note explaining *why* the order was created so the doctor understands the logic immediately.
-7. **The Record:** Every step is saved in an **Audit Log** for future review.
+3. **The Rule Check:** The system looks into a database (Firestore) to see if there is a "Reflex Rule" for that specific test (e.g., *"If Glucose > 200, order a follow-up"*). The rule itself already defines exactly which follow-up test applies — nothing is guessed.
+4. **The Decision** (made entirely by the rule check, not by AI):
+   - **Normal result:** The process stops and logs "No reflex required."
+   - **Abnormal, routine:** The system automatically proceeds to order the follow-up test defined by the rule.
+   - **Abnormal, critical (STAT):** The result is never auto-ordered. It's immediately escalated to a human clinician for review.
+5. **The Action:** For routine abnormal results only, the system automatically creates a **ServiceRequest** (a medical order) in the clinical database (FHIR Store).
+6. **The Explanation:** **Gemini AI** writes a simple, professional note explaining *why* that decision was made — normal, routine, or critical — so the doctor understands the logic immediately. Gemini explains the decision; it never makes it.
+7. **The Record:** Every outcome — ignored, auto-ordered, or escalated — is saved in an **Audit Log** for future review.
 
 ---
 
