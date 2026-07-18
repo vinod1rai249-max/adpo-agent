@@ -32,13 +32,45 @@ In traditional clinical workflows, there is often a significant delay between a 
 ## 🏗️ Architectural Flow
 ```mermaid
 graph TD
-    A[Lab Event Pub/Sub] --> B[FastAPI Application]
-    B --> C[Rule Engine Firestore]
-    C -->|Rule Match| D[ADPO Agent Gemini]
-    D --> E[FHIR ServiceRequest Order]
-    E --> F[Google Healthcare API Store]
-    D --> G[Audit Log Firestore]
-    D --> H[AI Explanation Vertex AI]
+    A[1. Lab System sends result] --> B[2. Pub/Sub - message queue]
+    B --> C[3. FastAPI on Cloud Run - app.py]
+    C --> D[4. Firestore Rule Engine - lab_rules.py]
+    D --> E{5. Decision}
+    E -->|abnormal, critical| F[HITL: send to human doctor]
+    E -->|normal| G[NO_REFLEX: nothing happens]
+    E -->|abnormal, routine| H[AUTO_ORDER: new test ordered]
+    H --> I[6. Cloud Healthcare API - FHIR ServiceRequest]
+    F --> J[7. Vertex AI Gemini - plain-English explanation]
+    G --> J
+    H --> J
+    I --> J
+    J --> K[8. Firestore Audit Log - every decision saved]
+    K --> L[9. Streamlit Dashboard - view everything]
+
+    classDef lab fill:#E8EAF6,stroke:#3949AB,color:#000
+    classDef pubsub fill:#FFF3E0,stroke:#EF6C00,color:#000
+    classDef api fill:#E3F2FD,stroke:#1565C0,color:#000
+    classDef rules fill:#E8F5E9,stroke:#2E7D32,color:#000
+    classDef decision fill:#FFFDE7,stroke:#F9A825,color:#000
+    classDef hitl fill:#FFEBEE,stroke:#C62828,color:#000
+    classDef noaction fill:#F5F5F5,stroke:#757575,color:#000
+    classDef autoorder fill:#E0F2F1,stroke:#00695C,color:#000
+    classDef gemini fill:#F3E5F5,stroke:#6A1B9A,color:#000
+    classDef audit fill:#E8F5E9,stroke:#2E7D32,color:#000
+    classDef dash fill:#FFF8E1,stroke:#F57F17,color:#000
+
+    class A lab
+    class B pubsub
+    class C api
+    class D rules
+    class E decision
+    class F hitl
+    class G noaction
+    class H autoorder
+    class I api
+    class J gemini
+    class K audit
+    class L dash
 ```
 
 ---
